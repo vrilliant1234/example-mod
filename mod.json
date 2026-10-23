@@ -1,17 +1,11 @@
 {
-	"geode": "$GEODE_VERSION",
-	"gd": {
-		"win": "2.2081",
-		"android": "2.2081",
-		"mac": "2.2081",
-		"ios": "2.2081"
-	},
-	"id": "$MOD_ID",
-	"name": "$MOD_NAME",
-	"version": "$MOD_VERSION",
-	"developer": "$MOD_DEVELOPER",
-	"description": "$MOD_DESCRIPTION",
-	"dependencies": {
-		"geode.node-ids": ">=v1.23.3"
-	}
+    "geode": "4.6.0",
+    "gd": {
+        "win": "2.2081"
+    },
+    "id": "yourname.hide-decorations",
+    "name": "Hide Decorations",
+    "version": "v1.0.0",
+    "developer": "fourrxxh",
+    "description": "Press ] in a level to toggle all decoration objects (client-side only)."
 }
