@@ -5,7 +5,7 @@
     },
     "id": "yourname.hide-decorations",
     "name": "Hide Decorations",
-    "version": "v1.2.0",
+    "version": "v1.3.0",
     "developer": "yourname",
     "description": "Press ] in a level to cycle decoration hiding: Shown, Low, Normal, Aggressive (client-side only)."
 }
