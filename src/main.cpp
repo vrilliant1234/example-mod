@@ -1,6 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/CCKeyboardDispatcher.hpp>
 #include <Geode/modify/PlayLayer.hpp>
+#include <Geode/modify/GameObject.hpp>
 #include <Geode/ui/Notification.hpp>
 
 using namespace geode::prelude;
@@ -29,7 +30,12 @@ static bool hidesParticles(int mode) {
     return mode >= DECO_NORMAL;
 }
 
-static bool isHideable(GameObject* obj, int mode) {
+// Aggressive also hides the glow layers
+static bool hidesGlowLayers(int mode) {
+    return mode >= DECO_AGGRESSIVE;
+}
+
+static bool isHideableRaw(GameObject* obj, int mode) {
     if (!obj || mode == DECO_SHOWN) return false;
 
     // Never touch triggers or start positions
@@ -39,17 +45,36 @@ static bool isHideable(GameObject* obj, int mode) {
     if (obj->m_objectType == GameObjectType::Decoration) return true;
     if (mode == DECO_LOW) return false;
 
-    // NORMAL+: "No Touch" objects (the player can't interact with them)
-    if (obj->m_isNoTouch) return true;
+    // NORMAL+: "No Touch" and "Passable" objects (they can't affect the player)
+    if (obj->m_isNoTouch || obj->m_isPassable) return true;
 
     // AGGRESSIVE: "High Detail" objects (the ones Low Detail Mode hides).
     // Hazards are never hidden this way, so spikes and saws stay visible.
     if (mode == DECO_AGGRESSIVE && obj->m_isHighDetail) {
-        if (obj->m_objectType == GameObjectType::Hazard) return false;
-        return true;
+        return obj->m_objectType != GameObjectType::Hazard;
     }
 
     return false;
+}
+
+static bool isHideable(GameObject* obj, int mode) {
+    if (!isHideableRaw(obj, mode)) return false;
+
+    // Never hide the player icons
+    if (typeinfo_cast<PlayerObject*>(obj)) return false;
+
+    return true;
+}
+
+static void setGlowLayersVisible(PlayLayer* pl, bool visible) {
+    CCNode* layers[] = {
+        pl->m_glowLayerT4, pl->m_glowLayerT3, pl->m_glowLayerT2, pl->m_glowLayerT1,
+        pl->m_glowLayerB1, pl->m_glowLayerB2, pl->m_glowLayerB3, pl->m_glowLayerB4,
+        pl->m_glowLayerB5
+    };
+    for (auto layer : layers) {
+        if (layer) layer->setVisible(visible);
+    }
 }
 
 // ----- Keybind: ] cycles the mode, only while inside a level -----
@@ -82,6 +107,10 @@ class $modify(HideDecoKeyboard, CCKeyboardDispatcher) {
                     }
                 }
 
+                if (hidesGlowLayers(prev) && !hidesGlowLayers(g_mode)) {
+                    setGlowLayersVisible(pl, true);
+                }
+
                 Notification::create(
                     modeName(g_mode),
                     NotificationIcon::Success,
@@ -95,12 +124,28 @@ class $modify(HideDecoKeyboard, CCKeyboardDispatcher) {
     }
 };
 
-// ----- Re-apply hiding every frame (the game's culling re-shows objects) -----
+// ----- Stop the game from re-showing hidden objects (only inside a level) -----
+class $modify(HideDecoGameObject, GameObject) {
+    void setVisible(bool visible) {
+        if (visible && g_mode != DECO_SHOWN && PlayLayer::get() && isHideable(this, g_mode)) {
+            visible = false;
+        }
+        GameObject::setVisible(visible);
+    }
+};
+
+// ----- Per-frame pass: particles, glow layers, and anything the hook missed -----
 class $modify(HideDecoPlayLayer, PlayLayer) {
     void postUpdate(float dt) {
         PlayLayer::postUpdate(dt);
 
-        if (g_mode == DECO_SHOWN || !m_objects) return;
+        if (g_mode == DECO_SHOWN) return;
+
+        if (hidesGlowLayers(g_mode)) {
+            setGlowLayersVisible(this, false);
+        }
+
+        if (!m_objects) return;
 
         bool hideParticles = hidesParticles(g_mode);
 
