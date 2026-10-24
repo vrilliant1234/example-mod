@@ -5,7 +5,7 @@
     },
     "id": "yourname.hide-decorations",
     "name": "Hide Decorations",
-    "version": "v1.0.0",
-    "developer": "fourrxxh",
-    "description": "Press ] in a level to toggle all decoration objects (client-side only)."
+    "version": "v1.2.0",
+    "developer": "yourname",
+    "description": "Press ] in a level to cycle decoration hiding: Shown, Low, Normal, Aggressive (client-side only)."
 }
