@@ -114,9 +114,9 @@ static void restoreColors(GameObject* obj) {
 
 static bool layoutSceneryColor(int colorID, ccColor3B& out) {
     switch (colorID) {
-        case 1000: out = LAYOUT_BG_COLOR; return true;          // background
+        case 1000: out = LAYOUT_BG_COLOR; return true;                // background
         case 1001: case 1009: out = LAYOUT_GROUND_COLOR; return true; // ground 1 and 2
-        case 1002: out = LAYOUT_LINE_COLOR; return true;        // ground line
+        case 1002: out = LAYOUT_LINE_COLOR; return true;              // ground line
         default: return false;
     }
 }
@@ -205,8 +205,20 @@ class $modify(HideDecoGameObject, GameObject) {
     }
 };
 
-// ----- Per-frame pass, plus keeping the background and ground flat in Layout mode -----
+// ----- Per-frame pass, level start/exit handling, and flat scenery in Layout mode -----
 class $modify(HideDecoPlayLayer, PlayLayer) {
+    // Every level starts with a clean state
+    bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
+        g_mode = DECO_SHOWN;
+        return PlayLayer::init(level, useReplay, dontCreateObjects);
+    }
+
+    // Reset before the level is torn down so none of our code runs during cleanup
+    void onQuit() {
+        g_mode = DECO_SHOWN;
+        PlayLayer::onQuit();
+    }
+
     void postUpdate(float dt) {
         PlayLayer::postUpdate(dt);
 
